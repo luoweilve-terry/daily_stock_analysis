@@ -81,8 +81,8 @@ class Config:
     telegram_chat_id: Optional[str] = None  # Chat ID
     
     # 邮件配置（只需邮箱和授权码，SMTP 自动识别）
-    email_sender: Optional[str] = luoweilve@qq.com  # 发件人邮箱
-    email_password: Optional[str] = ofhweiarkeglbhcg  # 邮箱密码/授权码
+    email_sender: Optional[str] = "luoweilve@qq.com"  # 发件人邮箱
+    email_password: Optional[str] = "ofhweiarkeglbhcg"  # 邮箱密码/授权码
     email_receivers: List[str] = field(default_factory=list)  # 收件人列表（留空则发给自己）
     
     # Pushover 配置（手机/桌面推送通知）
