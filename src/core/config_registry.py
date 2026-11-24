@@ -304,7 +304,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "LITELLM_MODEL": {
         "title": "Primary Model",
-        "description": "Primary model in provider/model format (e.g. gemini/gemini-3.1-pro-preview, deepseek/deepseek-v4-flash, anthropic/claude-sonnet-4-6). If empty, it is auto-inferred from available API keys or channel declarations.",
+        "description": "Primary model in provider/model format (e.g. gemini/gemini-3.6-flash, deepseek/deepseek-v4-flash, anthropic/claude-sonnet-4-6). If empty, it is auto-inferred from available API keys or channel declarations.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
@@ -318,7 +318,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "help_key": "settings.ai_model.LITELLM_MODEL",
         "examples": [
             "LITELLM_MODEL=deepseek/deepseek-v4-flash",
-            "LITELLM_MODEL=gemini/gemini-3.1-pro-preview",
+            "LITELLM_MODEL=gemini/gemini-3.6-flash",
             "LITELLM_MODEL=ollama/qwen3:8b",
         ],
         "docs": [
@@ -361,7 +361,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "help_key": "settings.ai_model.AGENT_LITELLM_MODEL",
         "examples": [
             "AGENT_LITELLM_MODEL=deepseek/deepseek-v4-pro",
-            "AGENT_LITELLM_MODEL=gemini/gemini-3.1-pro-preview",
+            "AGENT_LITELLM_MODEL=gemini/gemini-3.6-flash",
         ],
         "docs": [
             {
@@ -377,7 +377,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "LITELLM_FALLBACK_MODELS": {
         "title": "Fallback Models",
-        "description": "Comma-separated fallback models tried when the primary model fails (e.g. anthropic/claude-sonnet-4-6,openai/gpt-5.4-mini). Useful for cross-provider redundancy.",
+        "description": "Comma-separated fallback models tried when the primary model fails (e.g. anthropic/claude-sonnet-4-6,openai/gpt-6.1-terra). Useful for cross-provider redundancy.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "text",
@@ -390,8 +390,8 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "display_order": 2,
         "help_key": "settings.ai_model.LITELLM_FALLBACK_MODELS",
         "examples": [
-            "LITELLM_FALLBACK_MODELS=deepseek/deepseek-v4-pro,gemini/gemini-3-flash-preview",
-            "LITELLM_FALLBACK_MODELS=openai/gpt-5.4-mini",
+            "LITELLM_FALLBACK_MODELS=deepseek/deepseek-v4-pro,gemini/gemini-3.5-flash-lite",
+            "LITELLM_FALLBACK_MODELS=openai/gpt-6.1-terra",
         ],
         "docs": [
             {
@@ -732,7 +732,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     # ------------------------------------------------------------------
     "DEEPSEEK_API_KEY": {
         "title": "DeepSeek API Key",
-        "description": "Official DeepSeek API key (from https://platform.deepseek.com). For compatibility, a key set alone still auto-infers deepseek/deepseek-chat and logs a deprecation warning; new configs should migrate to deepseek/deepseek-v4-flash. Also works in multi-channel mode.",
+        "description": "Official DeepSeek API key (from https://platform.deepseek.com). A key set alone auto-infers deepseek/deepseek-v4-flash unless a higher-priority model configuration is present. Also works in multi-channel mode.",
         "category": "ai_model",
         "data_type": "string",
         "ui_control": "password",
@@ -786,7 +786,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": None,
         "options": [],
         "validation": {},
-        "display_order": 10,
+        "display_order": 13,
         "help_key": "settings.data_source.TUSHARE_TOKEN",
         "examples": [
             "TUSHARE_TOKEN=your_tushare_token",
@@ -802,6 +802,34 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             },
         ],
         "warning_codes": ["secret_value"],
+    },
+    "TICKPLUS_API_KEY": {
+        "title": "TickPlus API Key (Recommended)",
+        "description": "Preferred TickPlus API key for A-share/ETF daily K-lines, realtime indicators and name lookup. Failures fall back to existing providers.",
+        "category": "data_source",
+        "data_type": "string",
+        "ui_control": "password",
+        "is_sensitive": True,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": None,
+        "options": [],
+        "validation": {},
+        "display_order": 15,
+    },
+    "TICKPLUS_PRIORITY": {
+        "title": "TickPlus Daily K-line Priority",
+        "description": "Priority for TickPlus A-share/ETF daily K-lines. Registered index routes are unchanged; realtime order uses REALTIME_SOURCE_PRIORITY.",
+        "category": "data_source",
+        "data_type": "integer",
+        "ui_control": "number",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "0",
+        "options": [],
+        "validation": {"min": 0, "max": 99},
+        "display_order": 16,
     },
     "TICKFLOW_API_KEY": {
         "title": "TickFlow API Key",
@@ -871,7 +899,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": None,
         "options": [],
         "validation": {},
-        "display_order": 20,
+        "display_order": 23,
     },
     "MX_PRIORITY": {
         "title": "MiaoXiang Data Source Priority",
@@ -885,7 +913,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "6",
         "options": [],
         "validation": {"min": 0, "max": 99},
-        "display_order": 21,
+        "display_order": 24,
     },
     "TICKFLOW_BATCH_SIZE": {
         "title": "TickFlow Batch Size",
@@ -948,8 +976,8 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "warning_codes": [],
     },
     "FUTU_HK_REALTIME_SOURCE_PRIORITY": {
-        "title": "Futu 港股实时数据源优先级",
-        "description": "港股实时行情优先级，可选 futu、longbridge、akshare、yfinance。未配置 OpenD 时自动跳过 futu。",
+        "title": "Futu HK Realtime Source Priority",
+        "description": "HK realtime quote provider order: futu, longbridge, akshare, or yfinance, comma-separated. futu is skipped when OpenD is not configured.",
         "category": "data_source",
         "data_type": "string",
         "ui_control": "text",
@@ -982,7 +1010,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "true",
         "options": [],
         "validation": {},
-        "display_order": 16,
+        "display_order": 5,
         "help_key": "settings.data_source.stock_index_remote",
         "examples": [
             "STOCK_INDEX_REMOTE_UPDATE_ENABLED=true",
@@ -992,6 +1020,32 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             {
                 "label": "Tushare 股票列表指南",
                 "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/TUSHARE_STOCK_LIST_GUIDE.md",
+            },
+        ],
+        "warning_codes": [],
+    },
+    "CROSS_ASSET_CONTEXT_ENABLED": {
+        "title": "Cross-Asset Context",
+        "description": "Inject a low-sensitivity cross-asset (indices / VIX / US 10Y rates) context summary into stock analysis and calibrate risk appetite. Disabled by default (opt-in): when unset, the main analysis flow has zero behaviour change. Providers fail open to 'unknown' and never interrupt the main analysis.",
+        "category": "data_source",
+        "data_type": "boolean",
+        "ui_control": "switch",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "false",
+        "options": [],
+        "validation": {},
+        "display_order": 18,
+        "help_key": "settings.data_source.CROSS_ASSET_CONTEXT_ENABLED",
+        "examples": [
+            "CROSS_ASSET_CONTEXT_ENABLED=true",
+            "CROSS_ASSET_CONTEXT_ENABLED=false",
+        ],
+        "docs": [
+            {
+                "label": "Analysis Context Pack（跨资产上下文）",
+                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/analysis-context-pack.md",
             },
         ],
         "warning_codes": [],
@@ -1045,7 +1099,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "tencent,akshare_sina,efinance,akshare_em",
         "options": [],
         "validation": {},
-        "display_order": 20,
+        "display_order": 9,
         "help_key": "settings.data_source.REALTIME_SOURCE_PRIORITY",
         "examples": [
             "REALTIME_SOURCE_PRIORITY=tencent,akshare_sina,efinance,akshare_em",
@@ -1070,7 +1124,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "true",
         "options": [],
         "validation": {},
-        "display_order": 21,
+        "display_order": 6,
         "help_key": "settings.data_source.realtime_quotes",
         "examples": [
             "ENABLE_REALTIME_TECHNICAL_INDICATORS=true",
@@ -1096,7 +1150,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": None,
         "options": [],
         "validation": {"multi_value": True, "delimiter": ","},
-        "display_order": 22,
+        "display_order": 25,
         "help_key": "settings.data_source.search_api_keys",
         "examples": [
             "ANSPIRE_API_KEYS=key1,key2",
@@ -1189,7 +1243,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": None,
         "options": [],
         "validation": {"multi_value": True, "delimiter": ","},
-        "display_order": 53,
+        "display_order": 54,
     },
     "SEARXNG_BASE_URLS": {
         "title": "SearXNG Base URLs",
@@ -1248,7 +1302,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "true",
         "options": [],
         "validation": {},
-        "display_order": 22,
+        "display_order": 7,
         "help_key": "settings.data_source.realtime_quotes",
         "examples": [
             "ENABLE_REALTIME_QUOTE=true",
@@ -1274,7 +1328,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "true",
         "options": [],
         "validation": {},
-        "display_order": 23,
+        "display_order": 8,
         "help_key": "settings.data_source.ENABLE_CHIP_DISTRIBUTION",
         "examples": [
             "ENABLE_CHIP_DISTRIBUTION=true",
@@ -1300,7 +1354,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "3",
         "options": [],
         "validation": {"min": 1, "max": 30},
-        "display_order": 60,
+        "display_order": 10,
         "help_key": "settings.data_source.news_window",
         "examples": [
             "NEWS_MAX_AGE_DAYS=3",
@@ -1326,7 +1380,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "short",
         "options": ["ultra_short", "short", "medium", "long"],
         "validation": {"enum": ["ultra_short", "short", "medium", "long"]},
-        "display_order": 61,
+        "display_order": 11,
         "help_key": "settings.data_source.news_window",
         "examples": [
             "NEWS_STRATEGY_PROFILE=short",
@@ -1352,7 +1406,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "default_value": "5.0",
         "options": [],
         "validation": {"min": 0.0, "max": 50.0},
-        "display_order": 62,
+        "display_order": 12,
     },
     "PYTDX_HOST": {
         "title": "Pytdx Host",
@@ -1412,7 +1466,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "help_key": "settings.ai_model.provider_keys",
         "examples": [
             "GEMINI_API_KEY=your_gemini_api_key",
-            "LITELLM_MODEL=gemini/gemini-3.1-pro-preview",
+            "LITELLM_MODEL=gemini/gemini-3.6-flash",
         ],
         "docs": [
             {
@@ -1449,7 +1503,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "gemini-3.1-pro-preview",
+        "default_value": "gemini-3.6-flash",
         "options": [],
         "validation": {},
         "display_order": 20,
@@ -1463,7 +1517,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "gemini-3-flash-preview",
+        "default_value": "gemini-3.5-flash-lite",
         "options": [],
         "validation": {},
         "display_order": 21,
@@ -1499,7 +1553,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "examples": [
             "OPENAI_API_KEY=sk-xxxx",
             "OPENAI_BASE_URL=https://api.example.com/v1",
-            "LITELLM_MODEL=openai/gpt-5.5",
+            "LITELLM_MODEL=openai/gpt-6.1-sol",
         ],
         "docs": [
             {
@@ -1566,7 +1620,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "gpt-5.5",
+        "default_value": "gpt-6.1-sol",
         "options": [],
         "validation": {},
         "display_order": 60,
@@ -1709,6 +1763,114 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             },
         ],
         "warning_codes": ["webhook_secret_value"],
+    },
+    "WECOM_AIBOT_ENABLED": {
+        "title": "WeCom AI Bot Stream Mode",
+        "description": "Enable the WeCom AI Bot (smart robot) WebSocket long-connection mode for conversational bot commands. This is separate from the enterprise WeChat group webhook push channel, which keeps working independently.",
+        "category": "notification",
+        "data_type": "boolean",
+        "ui_control": "switch",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "false",
+        "options": [],
+        "validation": {},
+        "display_order": 36,
+        "help_key": "settings.notification.WECOM_AIBOT_ENABLED",
+        "examples": [
+            "WECOM_AIBOT_ENABLED=false",
+            "WECOM_AIBOT_ENABLED=true",
+            "WECOM_AIBOT_BOT_ID=your_wecom_aibot_bot_id",
+            "WECOM_AIBOT_SECRET=your_wecom_aibot_secret",
+        ],
+        "docs": [
+            {
+                "label": "完整指南：通知渠道配置",
+                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#通知渠道详细配置",
+            },
+            {
+                "label": "企业微信智能机器人长连接文档",
+                "href": "https://developer.work.weixin.qq.com/document/path/101463",
+            },
+        ],
+        "warning_codes": ["not_webhook_delivery", "restart_required"],
+    },
+    "WECOM_AIBOT_BOT_ID": {
+        "title": "WeCom AI Bot ID",
+        "description": "Bot ID of the WeCom AI (smart) robot, from the enterprise WeChat admin console. Required when WECOM_AIBOT_ENABLED=true.",
+        "category": "notification",
+        "data_type": "string",
+        "ui_control": "text",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": None,
+        "options": [],
+        "validation": {},
+        "display_order": 37,
+        "help_key": "settings.notification.WECOM_AIBOT_BOT_ID",
+        "examples": [
+            "WECOM_AIBOT_BOT_ID=your_wecom_aibot_bot_id",
+        ],
+        "docs": [
+            {
+                "label": "企业微信智能机器人长连接文档",
+                "href": "https://developer.work.weixin.qq.com/document/path/101463",
+            },
+        ],
+        "warning_codes": ["restart_required"],
+    },
+    "WECOM_AIBOT_SECRET": {
+        "title": "WeCom AI Bot Secret",
+        "description": "Dedicated secret for the WeCom AI Bot long-connection mode. Different from the group webhook Token/EncodingAESKey credentials.",
+        "category": "notification",
+        "data_type": "string",
+        "ui_control": "password",
+        "is_sensitive": True,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": None,
+        "options": [],
+        "validation": {},
+        "display_order": 38,
+        "help_key": "settings.notification.WECOM_AIBOT_SECRET",
+        "examples": [
+            "WECOM_AIBOT_SECRET=your_wecom_aibot_secret",
+        ],
+        "docs": [
+            {
+                "label": "企业微信智能机器人长连接文档",
+                "href": "https://developer.work.weixin.qq.com/document/path/101463",
+            },
+        ],
+        "warning_codes": ["secret_value", "restart_required"],
+    },
+    "WECOM_AIBOT_REPLY_STREAM": {
+        "title": "WeCom AI Bot Stream Reply",
+        "description": "Reply with streaming (stream msgtype) responses instead of one-shot markdown messages. Off by default.",
+        "category": "notification",
+        "data_type": "boolean",
+        "ui_control": "switch",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "false",
+        "options": [],
+        "validation": {},
+        "display_order": 39,
+        "help_key": "settings.notification.WECOM_AIBOT_REPLY_STREAM",
+        "examples": [
+            "WECOM_AIBOT_REPLY_STREAM=false",
+            "WECOM_AIBOT_REPLY_STREAM=true",
+        ],
+        "docs": [
+            {
+                "label": "企业微信智能机器人回复消息文档",
+                "href": "https://developer.work.weixin.qq.com/document/path/101138",
+            },
+        ],
+        "warning_codes": ["restart_required"],
     },
     "DINGTALK_APP_KEY": {
         "title": "DingTalk App Key",
@@ -3617,7 +3779,7 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     },
     "MARKET_REVIEW_REGION": {
         "title": "Market Review Region",
-        "description": "Market region for review: cn (A-shares), hk (Hong Kong), us (US stocks), jp (Japan), kr (Korea), or both (all markets).",
+        "description": "Market region for review: cn (A-shares), hk (Hong Kong), us (US stocks), jp (Japan), kr (Korea), tw (Taiwan), or both (all markets).",
         "category": "system",
         "data_type": "string",
         "ui_control": "text",
@@ -3625,13 +3787,13 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_required": False,
         "is_editable": True,
         "default_value": "cn",
-        "options": ["cn", "hk", "us", "jp", "kr", "both"],
-        "validation": {"allowed_values": ["cn", "hk", "us", "jp", "kr", "both"], "delimiter": ","},
+        "options": ["cn", "hk", "us", "jp", "kr", "tw", "both"],
+        "validation": {"allowed_values": ["cn", "hk", "us", "jp", "kr", "tw", "both"], "delimiter": ","},
         "display_order": 48,
         "help_key": "settings.system.market_review",
         "examples": [
             "MARKET_REVIEW_REGION=cn",
-            "MARKET_REVIEW_REGION=jp",
+            "MARKET_REVIEW_REGION=tw",
             "MARKET_REVIEW_REGION=both",
         ],
         "docs": [
@@ -3868,13 +4030,13 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
         "is_sensitive": False,
         "is_required": False,
         "is_editable": True,
-        "default_value": "v1",
+        "default_value": "v1.1",
         "options": [],
         "validation": {},
         "display_order": 40,
         "help_key": "settings.backtest.BACKTEST_ENGINE_VERSION",
         "examples": [
-            "BACKTEST_ENGINE_VERSION=v1",
+            "BACKTEST_ENGINE_VERSION=v1.1",
         ],
         "docs": [
             {
@@ -4207,6 +4369,36 @@ _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
             {
                 "label": "完整指南：Agent 配置",
                 "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#环境变量完整列表",
+            },
+        ],
+        "warning_codes": [],
+    },
+    "AGENT_DEBATE_ENABLED": {
+        "title": "Conditional Bull/Bear Debate",
+        "description": "In multi-agent mode, add an evidence brief and mandatory risk review when opinions disagree on direction or a buy opinion reaches 0.75 confidence.",
+        "category": "agent",
+        "data_type": "boolean",
+        "ui_control": "switch",
+        "is_sensitive": False,
+        "is_required": False,
+        "is_editable": True,
+        "default_value": "false",
+        "options": [],
+        "validation": {},
+        "display_order": 76,
+        "help_key": "settings.agent.AGENT_DEBATE_ENABLED",
+        "examples": [
+            "AGENT_DEBATE_ENABLED=false",
+            "AGENT_DEBATE_ENABLED=true",
+        ],
+        "docs": [
+            {
+                "label": "完整指南：Agent 配置",
+                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide.md#agent_debate_enabled",
+            },
+            {
+                "label": "Agent configuration guide (English)",
+                "href": "https://github.com/ZhuLinsen/daily_stock_analysis/blob/main/docs/full-guide_EN.md#agent_debate_enabled",
             },
         ],
         "warning_codes": [],
@@ -4667,7 +4859,7 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
         "help_key": "settings.ai_model.provider_keys",
         "examples": [
             "GEMINI_API_KEYS=your_gemini_key_1,your_gemini_key_2",
-            "LITELLM_MODEL=gemini/gemini-3.1-pro-preview",
+            "LITELLM_MODEL=gemini/gemini-3.6-flash",
         ],
         "docs": _DOC_LLM_CONFIG,
         "warning_codes": ["secret_value", "comma_separated_keys"],
@@ -4675,8 +4867,8 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
     "GEMINI_MODEL": {
         "help_key": "settings.ai_model.legacy_provider_params",
         "examples": [
-            "GEMINI_MODEL=gemini-3.1-pro-preview",
-            "LITELLM_MODEL=gemini/gemini-3.1-pro-preview",
+            "GEMINI_MODEL=gemini-3.6-flash",
+            "LITELLM_MODEL=gemini/gemini-3.6-flash",
         ],
         "docs": _DOC_LLM_CONFIG,
         "warning_codes": ["legacy_provider_setting"],
@@ -4684,8 +4876,8 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
     "GEMINI_MODEL_FALLBACK": {
         "help_key": "settings.ai_model.legacy_provider_params",
         "examples": [
-            "GEMINI_MODEL_FALLBACK=gemini-3-flash-preview",
-            "LITELLM_FALLBACK_MODELS=gemini/gemini-3-flash-preview",
+            "GEMINI_MODEL_FALLBACK=gemini-3.5-flash-lite",
+            "LITELLM_FALLBACK_MODELS=gemini/gemini-3.5-flash-lite",
         ],
         "docs": _DOC_LLM_CONFIG,
         "warning_codes": ["legacy_provider_setting"],
@@ -4711,8 +4903,8 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
     "OPENAI_MODEL": {
         "help_key": "settings.ai_model.legacy_provider_params",
         "examples": [
-            "OPENAI_MODEL=gpt-5.5",
-            "LITELLM_MODEL=openai/gpt-5.5",
+            "OPENAI_MODEL=gpt-6.1-sol",
+            "LITELLM_MODEL=openai/gpt-6.1-sol",
         ],
         "docs": _DOC_LLM_CONFIG,
         "warning_codes": ["legacy_provider_setting"],
@@ -4720,8 +4912,8 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
     "OPENAI_VISION_MODEL": {
         "help_key": "settings.ai_model.legacy_provider_params",
         "examples": [
-            "OPENAI_VISION_MODEL=gpt-5.5",
-            "VISION_MODEL=openai/gpt-5.5",
+            "OPENAI_VISION_MODEL=gpt-6.1-sol",
+            "VISION_MODEL=openai/gpt-6.1-sol",
         ],
         "docs": _DOC_LLM_CONFIG,
         "warning_codes": ["legacy_provider_setting"],
@@ -4769,6 +4961,19 @@ _FIELD_HELP_METADATA: Dict[str, Dict[str, Any]] = {
         ],
         "docs": _DOC_LLM_CONFIG,
         "warning_codes": ["legacy_provider_setting"],
+    },
+    "TICKPLUS_API_KEY": {
+        "help_key": "settings.data_source.TICKPLUS_API_KEY",
+        "examples": [
+            "TICKPLUS_API_KEY=your_tickplus_key",
+        ],
+        "docs": [{"label": "TickPlus (Recommended) — Register", "href": "http://www.tickplus.org/register?reg=5433cf922395"}, *_DOC_FULL_GUIDE_DATA_SOURCE],
+        "warning_codes": ["secret_value"],
+    },
+    "TICKPLUS_PRIORITY": {
+        "help_key": "settings.data_source.TICKPLUS_PRIORITY",
+        "examples": ["TICKPLUS_PRIORITY=0"],
+        "docs": _DOC_FULL_GUIDE_DATA_SOURCE,
     },
     "TICKFLOW_API_KEY": {
         "help_key": "settings.data_source.TICKFLOW_API_KEY",
@@ -5193,6 +5398,7 @@ def _infer_category(key: str) -> str:
     if key.endswith("_PRIORITY") or key.startswith(
         (
             "TUSHARE",
+            "TICKPLUS",
             "TICKFLOW",
             "AKSHARE",
             "EFINANCE",

@@ -382,17 +382,29 @@ async def send_chat_to_notification(request: SendChatRequest):
     from src.notification import NotificationService
 
     loop = asyncio.get_running_loop()
-    success = await loop.run_in_executor(
+    result = await loop.run_in_executor(
         None,
-        lambda: NotificationService().send(request.content),
+        lambda: NotificationService().send_with_results(request.content),
     )
-    if not success:
+    if result.success:
+        return {"success": True}
+    if result.status == "no_channel":
         return {
             "success": False,
             "error": "no_channels",
             "message": "未配置通知渠道，请先在设置中配置",
         }
-    return {"success": True}
+    if result.status == "noise_suppressed":
+        return {
+            "success": False,
+            "error": "noise_suppressed",
+            "message": result.message or "通知降噪规则已跳过本次发送。",
+        }
+    return {
+        "success": False,
+        "error": "all_failed",
+        "message": "通知渠道发送失败，请查看服务日志后重试。",
+    }
 
 
 def _build_executor(config, skills: Optional[List[str]] = None):
@@ -496,13 +508,13 @@ async def agent_research(request: ResearchRequest):
             timeout=research_timeout,
         )
         if getattr(result, "timed_out", False):
-            logger.warning("Agent research API timed out after %ss", research_timeout)
+            logger.warning("Agent research API timed out: %s", result.error)
             return ResearchResponse(
                 success=False,
                 content="",
                 sources=[],
-                token_usage=0,
-                error=f"Deep research timed out after {research_timeout}s",
+                token_usage=result.total_tokens,
+                error=result.error or "Deep research timed out",
             )
 
         return ResearchResponse(

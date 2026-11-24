@@ -827,6 +827,77 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertNotIn("LLM_UNUSED_API_KEY", raw_items)
         self.assertNotIn("UNRELATED_API_KEY", raw_items)
 
+    def test_get_config_reports_active_process_env_litellm_yaml(self) -> None:
+        yaml_path = Path(self.temp_dir.name) / "litellm.yaml"
+        yaml_path.write_text(
+            json.dumps({
+                "model_list": [{
+                    "model_name": "openai/yaml-model",
+                    "litellm_params": {
+                        "model": "openai/yaml-model",
+                        "api_base": "https://yaml.example/v1",
+                    },
+                }],
+            }),
+            encoding="utf-8",
+        )
+        self._rewrite_env("STOCK_LIST=600519")
+
+        with patch.dict(
+            os.environ,
+            {
+                "LITELLM_CONFIG": str(yaml_path),
+                "LLM_CHANNELS": "fallback",
+            },
+            clear=False,
+        ):
+            payload = self.service.get_config(include_schema=True)
+
+        items = {item["key"]: item for item in payload["items"]}
+        self.assertTrue(payload["llm_yaml_active"])
+        self.assertEqual(items["LITELLM_CONFIG"]["value"], str(yaml_path))
+        self.assertFalse(items["LITELLM_CONFIG"]["raw_value_exists"])
+
+    def test_get_config_survives_malformed_litellm_yaml_shapes(self) -> None:
+        yaml_path = Path(self.temp_dir.name) / "malformed-litellm.yaml"
+        yaml_path.write_text("- not-a-mapping\n- null\n", encoding="utf-8")
+        self._rewrite_env(
+            "STOCK_LIST=600519",
+            f"LITELLM_CONFIG={yaml_path}",
+            "LLM_CHANNELS=fallback",
+            "LLM_FALLBACK_MODELS=openai/fallback",
+        )
+
+        with patch.dict(os.environ, {}, clear=True):
+            payload = self.service.get_config(include_schema=True)
+
+        self.assertFalse(payload["llm_yaml_active"])
+        self.assertIn("LITELLM_CONFIG", {item["key"] for item in payload["items"]})
+
+    def test_empty_litellm_yaml_entries_fall_back_to_llm_channels_consistently(self) -> None:
+        yaml_path = Path(self.temp_dir.name) / "empty-entry-litellm.yaml"
+        yaml_path.write_text(
+            "model_list:\n  - {}\n  - litellm_params: {}\n",
+            encoding="utf-8",
+        )
+        self._rewrite_env(
+            "STOCK_LIST=600519",
+            f"LITELLM_CONFIG={yaml_path}",
+            "LLM_CHANNELS=fallback",
+            "LLM_FALLBACK_PROTOCOL=openai",
+            "LLM_FALLBACK_API_KEY=sk-fallback",
+            "LLM_FALLBACK_MODELS=openai/fallback-model",
+        )
+
+        with patch.dict(os.environ, {"ENV_FILE": str(self.env_path)}, clear=True):
+            Config.reset_instance()
+            runtime_cfg = Config.get_instance()
+            payload = self.service.get_config(include_schema=True)
+
+        self.assertFalse(payload["llm_yaml_active"])
+        self.assertEqual(runtime_cfg.llm_models_source, "llm_channels")
+        self.assertEqual(runtime_cfg.litellm_model, "openai/fallback-model")
+
     def test_get_config_runtime_env_fallback_does_not_persist_llm_fields_on_save(self) -> None:
         self._rewrite_env(
             "STOCK_LIST=600519",
@@ -1226,7 +1297,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
             "LLM_DEEPSEEK_MODELS=deepseek-v4-flash,deepseek-v4-pro",
             "LLM_MY_PROXY_PROTOCOL=openai",
             "LLM_MY_PROXY_API_KEYS=sk-key-1,sk-key-2",
-            "LLM_MY_PROXY_MODELS=gpt-5.5",
+            "LLM_MY_PROXY_MODELS=gpt-6.1-sol",
             "LLM_UNUSED_API_KEY=sk-should-not-leak",
             "DATABASE_PATH=./custom/stock_analysis.db",
         )
@@ -1238,7 +1309,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(items["LLM_DEEPSEEK_API_KEY"]["value"], "sk-test-value")
         self.assertEqual(items["LLM_DEEPSEEK_MODELS"]["value"], "deepseek-v4-flash,deepseek-v4-pro")
         self.assertEqual(items["LLM_MY_PROXY_API_KEYS"]["value"], "sk-key-1,sk-key-2")
-        self.assertEqual(items["LLM_MY_PROXY_MODELS"]["value"], "gpt-5.5")
+        self.assertEqual(items["LLM_MY_PROXY_MODELS"]["value"], "gpt-6.1-sol")
         self.assertEqual(items["LLM_MY_PROXY_API_KEYS"]["schema"]["category"], "ai_model")
         self.assertNotIn("LLM_UNUSED_API_KEY", items)
         self.assertNotIn("DATABASE_PATH", items)
@@ -1400,7 +1471,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self._rewrite_env(
             "GENERATION_BACKEND=litellm",
             "OPENAI_API_KEY=secret-key-value",
-            "OPENAI_MODEL=gpt-5.5",
+            "OPENAI_MODEL=gpt-6.1-sol",
         )
 
         with patch.dict(os.environ, {"ENV_FILE": str(self.env_path)}, clear=True):
@@ -1422,7 +1493,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
 
         with patch.dict(os.environ, {"ENV_FILE": str(self.env_path)}, clear=True):
             payload = self.service.preview_generation_backend_status(
-                items=[{"key": "GEMINI_MODEL", "value": "openai/gpt-5.5"}],
+                items=[{"key": "GEMINI_MODEL", "value": "openai/gpt-6.1-sol"}],
                 mask_token="******",
             )
 
@@ -1558,7 +1629,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self._rewrite_env(
             "GENERATION_BACKEND=codex_cli",
             "GENERATION_FALLBACK_BACKEND=",
-            "AGENT_LITELLM_MODEL=openai/gpt-5.5",
+            "AGENT_LITELLM_MODEL=openai/gpt-6.1-sol",
             "OPENAI_API_KEY=secret-key-value",
             "STOCK_LIST=600519",
         )
@@ -1576,7 +1647,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self._rewrite_env(
             "GENERATION_BACKEND=codex_cli",
             "GENERATION_FALLBACK_BACKEND=",
-            "LITELLM_MODEL=openai/gpt-5.5",
+            "LITELLM_MODEL=openai/gpt-6.1-sol",
             "OPENAI_API_KEY=secret-key-value",
             "STOCK_LIST=600519",
         )
@@ -1588,7 +1659,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         checks = {check["key"]: check for check in status["checks"]}
         self.assertEqual(checks["llm_agent"]["status"], "configured")
         self.assertIn(
-            "普通分析使用 Codex CLI；Agent 工具调用仍使用 LiteLLM 主模型: openai/gpt-5.5",
+            "普通分析使用 Codex CLI；Agent 工具调用仍使用 LiteLLM 主模型: openai/gpt-6.1-sol",
             checks["llm_agent"]["message"],
         )
 
@@ -1874,6 +1945,23 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         storage_check = next(check for check in status["checks"] if check["key"] == "storage")
         self.assertEqual(storage_check["status"], "configured")
         self.assertFalse(missing_parent.exists())
+
+    def test_get_setup_status_storage_check_rejects_directory_and_file_ancestor(self) -> None:
+        blocker_file = Path(self.temp_dir.name) / "main.py"
+        blocker_file.write_text("# regular file", encoding="utf-8")
+
+        for invalid_db in (Path(self.temp_dir.name), blocker_file / "stock_analysis.db"):
+            self._rewrite_env(
+                "LITELLM_MODEL=gemini/gemini-3-flash-preview",
+                "GEMINI_API_KEY=secret-key-value",
+                "STOCK_LIST=600519",
+                f"DATABASE_PATH={invalid_db}",
+            )
+            with patch.dict(os.environ, {}, clear=True):
+                status = self.service.get_setup_status()
+            storage_check = next(check for check in status["checks"] if check["key"] == "storage")
+            self.assertEqual(storage_check["status"], "needs_action")
+            self.assertFalse(status["is_complete"])
 
     def test_export_desktop_env_returns_raw_text(self) -> None:
         self.env_path.write_text(
@@ -2751,7 +2839,7 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         market_review_schema = items["MARKET_REVIEW_REGION"]["schema"]
         self.assertEqual(
             market_review_schema["validation"]["allowed_values"],
-            ["cn", "hk", "us", "jp", "kr", "both"],
+            ["cn", "hk", "us", "jp", "kr", "tw", "both"],
         )
         self.assertEqual(market_review_schema["validation"]["delimiter"], ",")
         self.assertEqual(
@@ -2875,12 +2963,13 @@ class SystemConfigServiceTestCase(unittest.TestCase):
         self.assertEqual(validation["issues"], [])
 
     def test_validate_accepts_comma_separated_market_review_region(self) -> None:
-        validation = self.service.validate(
-            items=[{"key": "MARKET_REVIEW_REGION", "value": "cn,jp,us"}]
-        )
-
-        self.assertTrue(validation["valid"])
-        self.assertEqual(validation["issues"], [])
+        for value in ("cn,jp,us", "tw", "cn,tw"):
+            with self.subTest(value=value):
+                validation = self.service.validate(
+                    items=[{"key": "MARKET_REVIEW_REGION", "value": value}]
+                )
+                self.assertTrue(validation["valid"])
+                self.assertEqual(validation["issues"], [])
 
     def test_validate_accepts_blank_context_compression_preset_fields(self) -> None:
         validation = self.service.validate(
@@ -3523,7 +3612,10 @@ class SystemConfigServiceTestCase(unittest.TestCase):
 
         self.assertTrue(payload["success"])
         self.assertEqual(mock_post.call_args.args[0], "https://ntfy.sh")
-        self.assertEqual(mock_post.call_args.kwargs["json"]["topic"], "private-topic")
+        self.assertEqual(
+            json.loads(mock_post.call_args.kwargs["data"].decode("utf-8"))["topic"],
+            "private-topic",
+        )
         self.assertEqual(mock_post.call_args.kwargs["headers"]["Authorization"], "Bearer secret-token")
         self.assertEqual(mock_post.call_args.kwargs["timeout"], 4)
         self.assertIn("https://ntfy.sh/***", payload["attempts"][0]["target"])
@@ -4841,14 +4933,14 @@ class SystemConfigServiceTestCase(unittest.TestCase):
     def test_update_market_review_region_accepts_comma_separated_regions(self) -> None:
         response = self.service.update(
             config_version=self.manager.get_config_version(),
-            items=[{"key": "MARKET_REVIEW_REGION", "value": "cn,jp,us"}],
+            items=[{"key": "MARKET_REVIEW_REGION", "value": "cn,jp,us,tw"}],
             reload_now=False,
         )
 
         self.assertTrue(response["success"])
         self.assertIn("MARKET_REVIEW_REGION", response["updated_keys"])
         current_map = self.manager.read_config_map()
-        self.assertEqual(current_map["MARKET_REVIEW_REGION"], "cn,jp,us")
+        self.assertEqual(current_map["MARKET_REVIEW_REGION"], "cn,jp,us,tw")
 
     def test_import_env_market_review_region_accepts_comma_separated_regions(self) -> None:
         response = self.service.import_env(

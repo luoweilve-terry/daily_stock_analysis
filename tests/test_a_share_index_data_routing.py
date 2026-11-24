@@ -358,7 +358,30 @@ def test_index_daily_route_returns_standard_empty_result_when_all_sources_fail(
         ["000688.SS"],
     ]
     assert "sh000688" in caplog.text
-    assert "所有指数日线数据源" in caplog.text
+    assert "all index daily sources failed" in caplog.text
+    assert any(record.levelno == logging.ERROR and "[index source exhausted]" in record.message
+               for record in caplog.records)
+
+
+def test_index_daily_real_base_fetcher_errors_keep_terminal_error(caplog) -> None:
+    class FailingFetcher(_FakeFetcher):
+        get_daily_data = BaseFetcher.get_daily_data
+
+        def _fetch_raw_data(self, stock_code, start_date, end_date):
+            raise RuntimeError("provider offline")
+
+    names = ["TencentFetcher", "AkshareFetcher", "TickFlowFetcher", "YfinanceFetcher"]
+    fetchers = [FailingFetcher(name, priority=i) for i, name in enumerate(names)]
+    manager = DataFetcherManager(fetchers=fetchers)
+    with caplog.at_level(logging.WARNING):
+        df, source = manager.get_daily_data("sh000688")
+    assert df.empty and source == ""
+    errors = [record for record in caplog.records if record.levelno >= logging.ERROR]
+    assert len(errors) == 1
+    assert "[index source exhausted]" in errors[0].message
+    for name in names:
+        assert any(record.levelno == logging.WARNING and f"[{name}]" in record.message
+                   for record in caplog.records)
 
 
 @pytest.mark.parametrize("stock_code", ["000016", "000001", "000688"])
@@ -373,8 +396,8 @@ def test_bare_conflict_codes_keep_stock_route_and_warn(stock_code, caplog) -> No
     assert source == "EfinanceFetcher"
     assert efinance.daily_calls == [stock_code]
     assert tencent.daily_calls == []
-    assert "裸代码" in caplog.text
-    assert "股票路由" in caplog.text
+    assert "bare code" in caplog.text
+    assert "routing as stock" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -397,8 +420,8 @@ def test_bare_conflict_get_stock_name_keeps_stock_name_and_warns(
 
     assert name == stock_name
     assert manager._stock_name_cache == {stock_code: stock_name}
-    assert "裸代码" in caplog.text
-    assert "股票路由" in caplog.text
+    assert "bare code" in caplog.text
+    assert "routing as stock" in caplog.text
 
 
 def test_non_index_prefixed_stock_keeps_existing_normalized_route() -> None:

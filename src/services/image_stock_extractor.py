@@ -204,7 +204,7 @@ def _parse_items_from_text(text: str) -> List[Tuple[str, Optional[str], str]]:
     # Fallback: legacy format (codes only)
     codes = _parse_codes_from_text(text)
     if not codes:
-        logger.info("[ImageExtractor] 无法解析为结构化 items，且 legacy code 提取为空")
+        logger.info("[ImageExtractor] Unable to parse as structured items, and legacy code extraction is empty")
     return [(c, None, "medium") for c in codes]
 
 
@@ -216,12 +216,12 @@ def _resolve_vision_model() -> str:
     if not model:
         # Fallback: infer from available keys
         if cfg.gemini_api_keys:
-            model_name = cfg.gemini_model or "gemini-3.1-pro-preview"
+            model_name = cfg.gemini_model or "gemini-3.6-flash"
             model = model_name if "/" in model_name else f"gemini/{model_name}"
         elif cfg.anthropic_api_keys:
             model = f"anthropic/{cfg.anthropic_model or 'claude-sonnet-4-6'}"
         elif cfg.openai_api_keys:
-            model = f"openai/{cfg.openai_model or 'gpt-5.5'}"
+            model = f"openai/{cfg.openai_model or 'gpt-6.1-sol'}"
         else:
             return ""
     return model
@@ -386,7 +386,7 @@ def extract_stock_codes_from_image(
             logger.debug("[ImageExtractor] raw LLM response:\n%s", raw)
             items = _parse_items_from_text(raw)
             logger.info(
-                f"[ImageExtractor] {model} 提取 {len(items)} 个: "
+                f"[ImageExtractor] {model} extracted {len(items)} item(s): "
                 f"{[(i[0], i[1]) for i in items[:5]]}{'...' if len(items) > 5 else ''}"
             )
             return items, raw
@@ -394,7 +394,7 @@ def extract_stock_codes_from_image(
             last_error = e
             if attempt < 2:
                 delay = 2 ** attempt
-                logger.warning(f"[ImageExtractor] 尝试 {attempt + 1}/3 失败，{delay}s 后重试: {e}")
+                logger.warning(f"[ImageExtractor] Attempt {attempt + 1}/3 failed, retrying in {delay}s: {e}")
                 time.sleep(delay)
 
     raise ValueError(
